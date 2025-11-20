@@ -19,10 +19,8 @@ USE DATABASE SNOWFLAKE_EXAMPLE;
 USE WAREHOUSE SFE_NEWSWORTHY_WH;
 USE SCHEMA SFE_ANALYTICS_MEDIA;
 
--- Suspend task before modification
-ALTER TASK sfe_daily_churn_scoring_task SUSPEND;
-
 -- Update task with ML model predictions
+-- Note: CREATE OR REPLACE automatically suspends the task during replacement
 CREATE OR REPLACE TASK sfe_daily_churn_scoring_task
     WAREHOUSE = SFE_NEWSWORTHY_WH
     SCHEDULE = 'USING CRON 0 4 * * * America/Los_Angeles'
