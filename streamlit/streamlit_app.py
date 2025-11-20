@@ -57,14 +57,14 @@ with st.sidebar:
     - Churn Scores: Daily at 4 AM
     """)
 
-# Build WHERE clause for filters
+# Build WHERE clause for filters (handle NULL values gracefully)
 where_clauses = []
 if risk_tiers:
     risk_list = "', '".join(risk_tiers)
-    where_clauses.append(f"risk_tier IN ('{risk_list}')")
+    where_clauses.append(f"(risk_tier IN ('{risk_list}') OR risk_tier IS NULL)")
 if engagement_tiers:
     engagement_list = "', '".join(engagement_tiers)
-    where_clauses.append(f"engagement_tier IN ('{engagement_list}')")
+    where_clauses.append(f"(engagement_tier IN ('{engagement_list}') OR engagement_tier IS NULL)")
 
 where_clause = " AND ".join(where_clauses) if where_clauses else "1=1"
 
