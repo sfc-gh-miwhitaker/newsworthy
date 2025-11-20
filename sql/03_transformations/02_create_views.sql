@@ -20,7 +20,9 @@ USE WAREHOUSE SFE_NEWSWORTHY_WH;
 USE SCHEMA SFE_ANALYTICS_MEDIA;
 
 -- Unified Customer 360 view combining dimension, facts, and health scores
-CREATE OR REPLACE VIEW V_CUSTOMER_360 AS
+CREATE OR REPLACE VIEW V_CUSTOMER_360
+COMMENT = 'DEMO: newsworthy - Unified Customer 360 view for dashboard and analytics'
+AS
 SELECT
     d.subscriber_id,
     d.email,
@@ -78,9 +80,7 @@ GROUP BY
     d.lifetime_value,
     h.churn_risk_score,
     h.risk_tier,
-    h.prediction_timestamp
-
-COMMENT = 'DEMO: newsworthy - Unified Customer 360 view for dashboard and analytics';
+    h.prediction_timestamp;
 
 -- Test view with sample query
 SELECT

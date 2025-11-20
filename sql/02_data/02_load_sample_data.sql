@@ -10,8 +10,9 @@
  * DATA GENERATED:
  *   - 25,000 subscribers (RAW_SUBSCRIBER_EVENTS → STG_UNIFIED_CUSTOMER)
  *   - 50,000 subscription events (last 90 days)
- *   - 500,000 content engagement records (last 30 days)
+ *   - 500,000 content engagement records (last 90 days with churn pattern)
  *   - 12,000 support interactions (last year)
+ *   - Realistic churn labels (~15-20% churned for ML training)
  * 
  * NATIVE FEATURES LEVERAGED:
  *   - GENERATOR: Table function for row generation
@@ -21,6 +22,12 @@
  *   - ZIPF: Power-law distribution for article popularity (80/20 rule)
  *   - SEQ4: Deterministic sequences for cyclic patterns
  *   - RANDOM: Seed for reproducible randomness
+ * 
+ * CHURN MODELING STRATEGY:
+ *   - Engagement data spans 90 days (70% recent, 20% declining, 10% inactive)
+ *   - Churn = no engagement in 45+ days AND tenure > 30 days
+ *   - Creates binary classification target suitable for Cortex ML
+ *   - Ensures both TRUE and FALSE values for model training
  * 
  * RUNTIME: ~3-5 minutes on XSMALL warehouse
  * 
@@ -61,8 +68,10 @@ SELECT
 FROM TABLE(GENERATOR(ROWCOUNT => 50000));
 
 -- =============================================================================
--- LOAD RAW CONTENT ENGAGEMENT (500K rows, 30 days)
+-- LOAD RAW CONTENT ENGAGEMENT (500K rows, 90 days with realistic churn pattern)
 -- =============================================================================
+-- Strategy: Generate engagement data across 90 days with varying recency patterns
+-- to create realistic churn signal (some users haven't engaged in 45+ days)
 
 INSERT INTO RAW_CONTENT_ENGAGEMENT (engagement_id, subscriber_id, article_id, view_timestamp, time_spent_seconds, section)
 SELECT
@@ -71,7 +80,16 @@ SELECT
     -- ZIPF distribution: Popular articles get most views (80/20 rule)
     -- Parameters: s=1.0 (moderate skew), N=1000 articles
     'ARTICLE_' || LPAD(ZIPF(1.0, 1000, RANDOM())::VARCHAR, 6, '0') AS article_id,
-    DATEADD('day', -UNIFORM(0, 30, RANDOM()), CURRENT_TIMESTAMP()) AS view_timestamp,
+    -- Extended timeframe: 90 days with weighted distribution
+    -- Most recent engagement (70% within last 30 days, 20% within 31-60 days, 10% older than 60 days)
+    DATEADD('day', 
+        -CASE 
+            WHEN UNIFORM(1, 100, RANDOM()) <= 70 THEN UNIFORM(0, 30, RANDOM())   -- 70% recent (active users)
+            WHEN UNIFORM(1, 100, RANDOM()) <= 90 THEN UNIFORM(31, 60, RANDOM())  -- 20% declining (at-risk)
+            ELSE UNIFORM(61, 90, RANDOM())                                         -- 10% old (likely churned)
+        END,
+        CURRENT_TIMESTAMP()
+    ) AS view_timestamp,
     -- NORMAL distribution: Most readers spend 2-5 minutes (mean=180s, stddev=120s)
     -- More realistic than uniform distribution (avoids unrealistic extremes)
     GREATEST(10, LEAST(600, ROUND(NORMAL(180, 120, RANDOM()), 0))) AS time_spent_seconds,
@@ -180,14 +198,28 @@ FROM SNOWFLAKE_EXAMPLE.SFE_STG_MEDIA.STG_CONTENT_ENGAGEMENT
 GROUP BY engagement_date, subscriber_id;
 
 -- Populate training dataset with features and churn labels
+-- Churn definition: No engagement in last 45 days + tenure > 30 days
+-- This creates realistic binary classification target (active vs. churned)
 INSERT INTO FCT_CHURN_TRAINING (subscriber_id, engagement_score, support_tickets_count, days_since_last_read, subscription_tenure_days, churned)
 SELECT
     d.subscriber_id,
     COALESCE(AVG(f.total_time_spent) / 60.0, 0) AS engagement_score,
     COALESCE(sup.ticket_count, 0) AS support_tickets_count,
-    COALESCE(DATEDIFF('day', MAX(f.engagement_date), CURRENT_DATE()), 999) AS days_since_last_read,
+    -- Calculate days since last engagement (999 if no engagement ever)
+    CASE 
+        WHEN MAX(f.engagement_date) IS NULL THEN 999
+        ELSE DATEDIFF('day', MAX(f.engagement_date), CURRENT_DATE())
+    END AS days_since_last_read,
     d.tenure_days AS subscription_tenure_days,
-    CASE WHEN d.tenure_days > 30 AND COALESCE(MAX(f.engagement_date), CURRENT_DATE()) < DATEADD('day', -30, CURRENT_DATE()) THEN TRUE ELSE FALSE END AS churned
+    -- Churn = TRUE if: (1) tenure > 30 days AND (2) no engagement in last 45 days
+    -- This ensures we have both TRUE and FALSE values for ML training
+    CASE 
+        WHEN d.tenure_days > 30 
+             AND (MAX(f.engagement_date) IS NULL 
+                  OR DATEDIFF('day', MAX(f.engagement_date), CURRENT_DATE()) > 45)
+        THEN TRUE 
+        ELSE FALSE 
+    END AS churned
 FROM DIM_SUBSCRIBERS d
 LEFT JOIN FCT_ENGAGEMENT_DAILY f ON d.subscriber_id = f.subscriber_id
 LEFT JOIN (
@@ -197,18 +229,32 @@ LEFT JOIN (
 ) sup ON d.subscriber_id = sup.subscriber_id
 GROUP BY d.subscriber_id, d.tenure_days, sup.ticket_count;
 
--- Display row counts
-SELECT 'RAW_SUBSCRIBER_EVENTS' AS table_name, COUNT(*) AS row_count FROM SNOWFLAKE_EXAMPLE.SFE_RAW_MEDIA.RAW_SUBSCRIBER_EVENTS
+-- Display row counts and verify churn distribution
+SELECT 'RAW_SUBSCRIBER_EVENTS' AS table_name, COUNT(*) AS row_count, NULL AS churned, NULL AS churn_rate FROM SNOWFLAKE_EXAMPLE.SFE_RAW_MEDIA.RAW_SUBSCRIBER_EVENTS
 UNION ALL
-SELECT 'RAW_CONTENT_ENGAGEMENT', COUNT(*) FROM SNOWFLAKE_EXAMPLE.SFE_RAW_MEDIA.RAW_CONTENT_ENGAGEMENT
+SELECT 'RAW_CONTENT_ENGAGEMENT', COUNT(*), NULL, NULL FROM SNOWFLAKE_EXAMPLE.SFE_RAW_MEDIA.RAW_CONTENT_ENGAGEMENT
 UNION ALL
-SELECT 'RAW_SUPPORT_INTERACTIONS', COUNT(*) FROM SNOWFLAKE_EXAMPLE.SFE_RAW_MEDIA.RAW_SUPPORT_INTERACTIONS
+SELECT 'RAW_SUPPORT_INTERACTIONS', COUNT(*), NULL, NULL FROM SNOWFLAKE_EXAMPLE.SFE_RAW_MEDIA.RAW_SUPPORT_INTERACTIONS
 UNION ALL
-SELECT 'STG_UNIFIED_CUSTOMER', COUNT(*) FROM SNOWFLAKE_EXAMPLE.SFE_STG_MEDIA.STG_UNIFIED_CUSTOMER
+SELECT 'STG_UNIFIED_CUSTOMER', COUNT(*), NULL, NULL FROM SNOWFLAKE_EXAMPLE.SFE_STG_MEDIA.STG_UNIFIED_CUSTOMER
 UNION ALL
-SELECT 'DIM_SUBSCRIBERS', COUNT(*) FROM SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.DIM_SUBSCRIBERS
+SELECT 'DIM_SUBSCRIBERS', COUNT(*), NULL, NULL FROM SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.DIM_SUBSCRIBERS
 UNION ALL
-SELECT 'FCT_ENGAGEMENT_DAILY', COUNT(*) FROM SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.FCT_ENGAGEMENT_DAILY
+SELECT 'FCT_ENGAGEMENT_DAILY', COUNT(*), NULL, NULL FROM SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.FCT_ENGAGEMENT_DAILY
 UNION ALL
-SELECT 'FCT_CHURN_TRAINING', COUNT(*) FROM SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.FCT_CHURN_TRAINING;
+SELECT 'FCT_CHURN_TRAINING', COUNT(*), NULL, NULL FROM SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.FCT_CHURN_TRAINING
+UNION ALL
+SELECT 'FCT_CHURN_TRAINING (CHURNED=TRUE)', 
+       COUNT(*), 
+       TRUE,
+       ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.FCT_CHURN_TRAINING), 2)
+FROM SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.FCT_CHURN_TRAINING 
+WHERE churned = TRUE
+UNION ALL
+SELECT 'FCT_CHURN_TRAINING (CHURNED=FALSE)', 
+       COUNT(*), 
+       FALSE,
+       ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.FCT_CHURN_TRAINING), 2)
+FROM SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.FCT_CHURN_TRAINING 
+WHERE churned = FALSE;
 

@@ -27,8 +27,8 @@ USE WAREHOUSE SFE_NEWSWORTHY_WH;
 CREATE OR REPLACE TASK sfe_process_subscribers_task
     WAREHOUSE = SFE_NEWSWORTHY_WH
     SCHEDULE = '1 MINUTE'
-    WHEN SYSTEM$STREAM_HAS_DATA('SFE_RAW_MEDIA.sfe_subscriber_events_stream')
     COMMENT = 'DEMO: newsworthy - Process new subscription events from stream'
+    WHEN SYSTEM$STREAM_HAS_DATA('SFE_RAW_MEDIA.sfe_subscriber_events_stream')
 AS
 BEGIN
     -- Merge new events into staging
@@ -89,8 +89,8 @@ END;
 CREATE OR REPLACE TASK sfe_process_engagement_task
     WAREHOUSE = SFE_NEWSWORTHY_WH
     SCHEDULE = '1 MINUTE'
-    WHEN SYSTEM$STREAM_HAS_DATA('SFE_RAW_MEDIA.sfe_content_stream')
     COMMENT = 'DEMO: newsworthy - Process new content engagement from stream'
+    WHEN SYSTEM$STREAM_HAS_DATA('SFE_RAW_MEDIA.sfe_content_stream')
 AS
 BEGIN
     -- Insert new engagement records
