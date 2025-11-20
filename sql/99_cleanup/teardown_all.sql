@@ -97,7 +97,7 @@ DROP API INTEGRATION IF EXISTS SFE_NEWSWORTHY_GIT_INTEGRATION;
 -- =============================================================================
 
 -- Verify all demo objects removed
-SELECT 'Cleanup verification' AS step;
+-- Run these SHOW commands individually to verify cleanup
 
 -- Check schemas (should return no SFE_*_MEDIA or SFE_STREAMLIT_APPS)
 SHOW SCHEMAS IN DATABASE SNOWFLAKE_EXAMPLE;

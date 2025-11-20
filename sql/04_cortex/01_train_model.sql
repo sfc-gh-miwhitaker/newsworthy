@@ -69,5 +69,3 @@ SELECT
 FROM FCT_CHURN_TRAINING
 LIMIT 10;
 
-SELECT 'Model training complete. Ready for daily scoring.' AS status;
-
