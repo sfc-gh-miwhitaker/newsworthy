@@ -15,7 +15,7 @@
  *   3. Paste the script
  *   4. Click "Run All" (top-right)
  *   5. Wait ~12 minutes for complete deployment
- *   6. Navigate to Apps -> Streamlit -> SFE_CUSTOMER_360_DASHBOARD
+ *   6. Navigate to Projects -> Streamlit -> SFE_CUSTOMER_360_DASHBOARD
  * 
  * REQUIREMENTS:
  *   - Snowflake account with Enterprise Edition or higher
@@ -193,7 +193,7 @@ SELECT
     TO_VARCHAR(
         MOD(TIMEDIFF('SECOND', $deployment_start_time, CURRENT_TIMESTAMP()), 60)
     ) || ' sec' AS total_runtime,
-    'Navigate to Apps -> Streamlit -> SFE_CUSTOMER_360_DASHBOARD' AS next_step,
+    'Navigate to Projects -> Streamlit -> SFE_CUSTOMER_360_DASHBOARD' AS next_step,
     'Run verification queries below individually for detailed object inspection' AS verification_note;
 
 -- =============================================================================
@@ -279,7 +279,7 @@ SELECT
 
 /*
  * 1. VIEW DASHBOARD:
- *    Navigate to: Apps -> Streamlit -> SFE_CUSTOMER_360_DASHBOARD
+ *    Navigate to: Projects -> Streamlit -> SFE_CUSTOMER_360_DASHBOARD
  *    Or direct URL: https://<your-account>.snowflakecomputing.com/streamlit/SFE_CUSTOMER_360_DASHBOARD
  * 
  * 2. EXPLORE DATA:

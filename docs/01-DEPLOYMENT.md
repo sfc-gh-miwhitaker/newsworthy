@@ -33,7 +33,7 @@ sql/00_deploy_all.sql
 - Wait ~12 minutes for completion
 
 ### 6. Access Dashboard
-Navigate to: **Apps → Streamlit → SFE_CUSTOMER_360_DASHBOARD**
+Navigate to: **Projects → Streamlit → SFE_CUSTOMER_360_DASHBOARD**
 
 **That's it!** The entire Customer 360 demo is deployed.
 
