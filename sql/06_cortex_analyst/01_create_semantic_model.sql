@@ -31,7 +31,7 @@ USE SCHEMA SEMANTIC_MODELS;
 -- Based on V_CUSTOMER_360 unified customer view
 CREATE OR REPLACE SEMANTIC VIEW SV_CUSTOMER_360
 TABLES (
-    SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.V_CUSTOMER_360 AS customer360
+    customer360 AS SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.V_CUSTOMER_360
     COMMENT = 'Unified view of all subscribers with demographics, engagement, and churn predictions'
 )
 DIMENSIONS (
