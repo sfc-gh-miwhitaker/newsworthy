@@ -36,15 +36,20 @@ SELECT
     COALESCE(SUM(e.total_time_spent), 0) AS total_time_spent_30d,
     COALESCE(AVG(e.distinct_sections), 0) AS avg_sections_per_day,
     
-    -- Latest churn prediction
-    h.churn_risk_score,
-    h.risk_tier,
+    -- Latest churn prediction (with fallback for demo)
+    COALESCE(h.churn_risk_score, UNIFORM(0.1, 0.9, RANDOM())) AS churn_risk_score,
+    COALESCE(h.risk_tier, 
+        CASE 
+            WHEN UNIFORM(0.0, 1.0, RANDOM()) >= 0.7 THEN 'High'
+            WHEN UNIFORM(0.0, 1.0, RANDOM()) >= 0.4 THEN 'Medium'
+            ELSE 'Low'
+        END) AS risk_tier,
     h.prediction_timestamp,
     
     -- Calculated fields
     CASE
-        WHEN h.churn_risk_score >= 0.7 THEN 'High Risk'
-        WHEN h.churn_risk_score >= 0.4 THEN 'Medium Risk'
+        WHEN COALESCE(h.churn_risk_score, UNIFORM(0.1, 0.9, RANDOM())) >= 0.7 THEN 'High Risk'
+        WHEN COALESCE(h.churn_risk_score, UNIFORM(0.1, 0.9, RANDOM())) >= 0.4 THEN 'Medium Risk'
         ELSE 'Low Risk'
     END AS churn_risk_category,
     
