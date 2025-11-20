@@ -63,6 +63,9 @@
 -- SECTION 1: ENVIRONMENT SETUP
 -- =============================================================================
 
+-- Capture deployment start time for runtime calculation
+SET deployment_start_time = CURRENT_TIMESTAMP();
+
 -- Use ACCOUNTADMIN role for API integration and Git repository creation
 USE ROLE ACCOUNTADMIN;
 
@@ -174,12 +177,22 @@ EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo/branches/mai
 -- SECTION 10: DEPLOYMENT COMPLETE
 -- =============================================================================
 
--- Display comprehensive deployment summary
+-- Display comprehensive deployment summary with actual runtime
 -- Note: Single SELECT statement to avoid output being replaced in "Run All" mode
 SELECT
     'DEPLOYMENT COMPLETE' AS status,
     CURRENT_TIMESTAMP() AS completed_at,
-    '~12 minutes' AS total_runtime,
+    TIMEDIFF(
+        'SECOND',
+        $deployment_start_time,
+        CURRENT_TIMESTAMP()
+    ) AS runtime_seconds,
+    TO_VARCHAR(
+        FLOOR(TIMEDIFF('SECOND', $deployment_start_time, CURRENT_TIMESTAMP()) / 60)
+    ) || ' min ' ||
+    TO_VARCHAR(
+        MOD(TIMEDIFF('SECOND', $deployment_start_time, CURRENT_TIMESTAMP()), 60)
+    ) || ' sec' AS total_runtime,
     'Navigate to Apps -> Streamlit -> SFE_CUSTOMER_360_DASHBOARD' AS next_step,
     'Run verification queries below individually for detailed object inspection' AS verification_note;
 
