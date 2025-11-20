@@ -256,6 +256,172 @@ with st.expander("📊 Detailed Analytics", expanded=False):
     else:
         st.info("No data available")
 
+# =============================================================================
+# CONVERSATIONAL AI: "ASK WHY" SECTION
+# =============================================================================
+
+st.markdown("---")
+st.markdown("## 💬 Ask Why: Conversational AI Analytics")
+st.markdown("""
+**Go beyond the charts** - Ask natural language questions to understand the "why" behind the numbers.  
+Powered by **Snowflake Cortex Analyst** with semantic understanding of your data.
+""")
+
+# Initialize chat history in session state
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Display suggested questions
+with st.expander("💡 Suggested Questions", expanded=False):
+    st.markdown("""
+    **Churn Analysis:**
+    - "Which subscription tier has the highest churn risk?"
+    - "How many subscribers are at high risk of churning?"
+    - "Is there a correlation between engagement and churn risk?"
+    
+    **Engagement Patterns:**
+    - "How many subscribers are inactive and what's their churn risk?"
+    - "Which demographic segments have the highest churn risk?"
+    
+    **Support Impact:**
+    - "Do support tickets correlate with higher churn risk?"
+    - "What's the average churn risk for subscribers with multiple support tickets?"
+    """)
+
+# Display chat messages from history
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        if message["role"] == "user":
+            st.markdown(message["content"])
+        else:
+            # Display assistant response with SQL if available
+            st.markdown(message["content"])
+            if "sql" in message and message["sql"]:
+                with st.expander("🔍 View Generated SQL"):
+                    st.code(message["sql"], language="sql")
+
+# Chat input
+if prompt := st.chat_input("Ask a question about subscriber churn and engagement..."):
+    # Add user message to chat history and display it
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+    
+    # Call Cortex Analyst API
+    with st.chat_message("assistant"):
+        with st.spinner("Analyzing your question..."):
+            try:
+                # Make REST API call to Cortex Analyst
+                import requests
+                import json
+                
+                # Get connection details from session
+                conn = session.connection
+                
+                # Build REST API URL
+                account_url = conn.host
+                if not account_url.startswith('https://'):
+                    account_url = f"https://{account_url}"
+                
+                api_url = f"{account_url}/api/v2/cortex/analyst/message"
+                
+                # Prepare request payload with semantic view
+                payload = {
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": prompt
+                                }
+                            ]
+                        }
+                    ],
+                    "semantic_view": "SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS.SV_CUSTOMER_360"
+                }
+                
+                # Get auth token from connection
+                headers = {
+                    "Authorization": f"Snowflake Token=\"{conn._rest._token_request()}\"",
+                    "Content-Type": "application/json",
+                    "X-Snowflake-Authorization-Token-Type": "KEYPAIR_JWT"
+                }
+                
+                # Send request
+                response = requests.post(api_url, json=payload, headers=headers)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    
+                    # Extract text response
+                    message_content = result.get("message", {})
+                    content_blocks = message_content.get("content", [])
+                    
+                    response_text = ""
+                    generated_sql = ""
+                    
+                    for block in content_blocks:
+                        if block.get("type") == "text":
+                            response_text += block.get("text", "")
+                        elif block.get("type") == "sql":
+                            generated_sql = block.get("statement", "")
+                    
+                    # Display response
+                    if response_text:
+                        st.markdown(response_text)
+                    else:
+                        st.markdown("I found relevant information about your question.")
+                    
+                    # Show generated SQL
+                    if generated_sql:
+                        with st.expander("🔍 View Generated SQL"):
+                            st.code(generated_sql, language="sql")
+                        
+                        # Execute the SQL to show results
+                        try:
+                            with st.expander("📊 Query Results", expanded=True):
+                                result_df = session.sql(generated_sql).to_pandas()
+                                if not result_df.empty:
+                                    st.dataframe(result_df, use_container_width=True)
+                                else:
+                                    st.info("Query returned no results")
+                        except Exception as e:
+                            st.error(f"Could not execute query: {str(e)}")
+                    
+                    # Add to chat history
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": response_text if response_text else "Analysis complete.",
+                        "sql": generated_sql
+                    })
+                    
+                else:
+                    error_msg = f"Sorry, I encountered an error (Status: {response.status_code})"
+                    st.error(error_msg)
+                    if response.text:
+                        st.error(f"Details: {response.text}")
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": error_msg,
+                        "sql": None
+                    })
+                    
+            except Exception as e:
+                error_msg = f"Sorry, I couldn't process your question: {str(e)}"
+                st.error(error_msg)
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": error_msg,
+                    "sql": None
+                })
+
+# Reset conversation button
+if st.session_state.messages:
+    if st.button("🔄 Reset Conversation"):
+        st.session_state.messages = []
+        st.rerun()
+
 # Footer
 st.markdown("---")
 st.markdown("""
@@ -266,11 +432,13 @@ This dashboard demonstrates production-grade architecture patterns. Review and c
 - `V_CUSTOMER_360`: Unified customer view
 - `FCT_CUSTOMER_HEALTH_SCORES`: ML churn predictions
 - `FCT_ENGAGEMENT_DAILY`: Engagement metrics
+- `SV_CUSTOMER_360`: Semantic view for Cortex Analyst
 
 **⚙️ Technology:**
 - Snowflake Streams (CDC)
 - Snowflake Tasks (Automation)
 - Cortex ML Classification (Predictions)
+- Cortex Analyst (Conversational AI)
 - Streamlit in Snowflake (UI)
 """)
 
