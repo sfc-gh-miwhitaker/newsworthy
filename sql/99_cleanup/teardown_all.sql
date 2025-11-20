@@ -47,20 +47,26 @@ DROP TASK IF EXISTS SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.sfe_daily_churn_scorin
 DROP SNOWFLAKE.ML.CLASSIFICATION IF EXISTS SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.SFE_CHURN_CLASSIFIER;
 
 -- =============================================================================
--- SECTION 3: DROP STREAMLIT APPLICATIONS
+-- SECTION 3: DROP SEMANTIC VIEWS (CORTEX ANALYST)
+-- =============================================================================
+
+DROP VIEW IF EXISTS SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS.SV_CUSTOMER_360;
+
+-- =============================================================================
+-- SECTION 4: DROP STREAMLIT APPLICATIONS
 -- =============================================================================
 
 DROP STREAMLIT IF EXISTS SNOWFLAKE_EXAMPLE.SFE_STREAMLIT_APPS.SFE_CUSTOMER_360_DASHBOARD;
 
 -- =============================================================================
--- SECTION 4: DROP STREAMS
+-- SECTION 5: DROP STREAMS
 -- =============================================================================
 
 DROP STREAM IF EXISTS SNOWFLAKE_EXAMPLE.SFE_RAW_MEDIA.sfe_subscriber_events_stream;
 DROP STREAM IF EXISTS SNOWFLAKE_EXAMPLE.SFE_RAW_MEDIA.sfe_content_stream;
 
 -- =============================================================================
--- SECTION 5: DROP SCHEMAS (CASCADE removes all tables, views)
+-- SECTION 6: DROP SCHEMAS (CASCADE removes all tables, views)
 -- =============================================================================
 
 DROP SCHEMA IF EXISTS SNOWFLAKE_EXAMPLE.SFE_RAW_MEDIA CASCADE;
@@ -69,25 +75,25 @@ DROP SCHEMA IF EXISTS SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA CASCADE;
 DROP SCHEMA IF EXISTS SNOWFLAKE_EXAMPLE.SFE_STREAMLIT_APPS CASCADE;
 
 -- =============================================================================
--- SECTION 6: DROP GIT REPOSITORY
+-- SECTION 7: DROP GIT REPOSITORY
 -- =============================================================================
 
 DROP GIT REPOSITORY IF EXISTS SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo;
 
 -- =============================================================================
--- SECTION 7: DROP WAREHOUSE
+-- SECTION 8: DROP WAREHOUSE
 -- =============================================================================
 
 DROP WAREHOUSE IF EXISTS SFE_NEWSWORTHY_WH;
 
 -- =============================================================================
--- SECTION 8: DROP API INTEGRATION
+-- SECTION 9: DROP API INTEGRATION
 -- =============================================================================
 
 DROP API INTEGRATION IF EXISTS SFE_NEWSWORTHY_GIT_INTEGRATION;
 
 -- =============================================================================
--- SECTION 9: VERIFICATION
+-- SECTION 10: VERIFICATION
 -- =============================================================================
 
 -- Verify all demo objects removed
