@@ -167,14 +167,21 @@ EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo/branches/mai
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo/branches/main/sql/04_cortex/02_daily_scoring.sql;
 
 -- =============================================================================
--- SECTION 9: EXECUTE STREAMLIT DEPLOYMENT FROM GIT REPOSITORY
+-- SECTION 9: EXECUTE CORTEX ANALYST SEMANTIC VIEW DEPLOYMENT
 -- =============================================================================
 
--- Execute 05_streamlit script: Create Customer 360 dashboard
+-- Execute 06_cortex_analyst script: Create semantic view for conversational AI
+EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo/branches/main/sql/06_cortex_analyst/01_create_semantic_model.sql;
+
+-- =============================================================================
+-- SECTION 10: EXECUTE STREAMLIT DEPLOYMENT FROM GIT REPOSITORY
+-- =============================================================================
+
+-- Execute 05_streamlit script: Create Customer 360 dashboard with AI chat
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo/branches/main/sql/05_streamlit/01_create_dashboard.sql;
 
 -- =============================================================================
--- SECTION 10: DEPLOYMENT COMPLETE
+-- SECTION 11: DEPLOYMENT COMPLETE
 -- =============================================================================
 
 -- Display comprehensive deployment summary with actual runtime
