@@ -219,7 +219,7 @@ SELECT
  * SELECT COUNT(*) AS subscriber_count
  * FROM SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.V_CUSTOMER_360;
  * 
- */'
+ */
 
 -- =============================================================================
 -- TROUBLESHOOTING SECTION

@@ -23,25 +23,19 @@ USE WAREHOUSE SFE_NEWSWORTHY_WH;
 USE SCHEMA SFE_STREAMLIT_APPS;
 
 -- Create Streamlit dashboard from Git repository
--- Note: In this demo, we'll create a simple inline Streamlit app
--- For production, code would come from Git repository
-
 CREATE OR REPLACE STREAMLIT SFE_CUSTOMER_360_DASHBOARD
+    ROOT_LOCATION = '@SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo/branches/main/streamlit'
     MAIN_FILE = 'streamlit_app.py'
     QUERY_WAREHOUSE = SFE_NEWSWORTHY_WH
     COMMENT = 'DEMO: newsworthy - Customer 360 analytics dashboard with churn predictions';
 
--- Since we can't directly write Python files via SQL, we'll note here that
--- the Streamlit app code would typically come from:
--- @SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo/branches/main/streamlit/app.py
-
--- For this demo deployment, create a placeholder message
--- In practice, the app.py file would be in the Git repository
-
+-- Verify Streamlit created successfully
 SELECT 
-    'Streamlit dashboard created' AS status,
-    'Navigate to Apps -> Streamlit -> SFE_CUSTOMER_360_DASHBOARD' AS next_step;
+    'Streamlit dashboard created successfully' AS status,
+    'SFE_CUSTOMER_360_DASHBOARD' AS streamlit_name,
+    'Navigate to Apps -> Streamlit -> SFE_CUSTOMER_360_DASHBOARD' AS access_instructions,
+    'https://<your-account>.snowflakecomputing.com/streamlit/SFE_CUSTOMER_360_DASHBOARD' AS direct_url;
 
--- Verify Streamlit created
+-- Show created Streamlit
 SHOW STREAMLITS IN SCHEMA SFE_STREAMLIT_APPS;
 
