@@ -98,13 +98,3 @@ COMMENT = 'DEMO: newsworthy - Semantic view for Customer 360 churn analysis with
 GRANT USAGE ON SCHEMA SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS TO ROLE SYSADMIN;
 GRANT SELECT ON VIEW SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS.SV_CUSTOMER_360 TO ROLE SYSADMIN;
 
--- Verify semantic model created successfully
-SELECT
-    'Semantic model deployed successfully' AS status,
-    'SV_CUSTOMER_360' AS model_name,
-    'SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS' AS location,
-    'Ready for Cortex Analyst queries' AS next_step;
-
--- Show semantic models in schema
-SHOW VIEWS IN SCHEMA SNOWFLAKE_EXAMPLE.SEMANTIC_MODELS;
-
