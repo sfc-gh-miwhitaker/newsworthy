@@ -39,58 +39,58 @@ DIMENSIONS (
         WITH SYNONYMS = ('customer id', 'user id', 'subscriber', 'customer')
         COMMENT = 'Unique identifier for each subscriber',
     
-    customer360.subscriber_name AS subscriber_name
-        WITH SYNONYMS = ('customer name', 'name', 'user')
-        COMMENT = 'Full name of the subscriber',
+    customer360.email AS email
+        WITH SYNONYMS = ('email address', 'contact email', 'subscriber email')
+        COMMENT = 'Email address of the subscriber',
     
     customer360.demographic_segment AS demographic_segment
         WITH SYNONYMS = ('segment', 'customer segment', 'demo', 'demographic')
-        COMMENT = 'Demographic classification: Young Urban Premium, Middle-Age Suburban Standard, Senior Rural Basic',
+        COMMENT = 'Demographic classification of the subscriber',
     
-    customer360.subscription_tier AS subscription_tier
-        WITH SYNONYMS = ('tier', 'plan', 'subscription level', 'package')
-        COMMENT = 'Subscription level: Basic ($9.99/mo), Premium ($19.99/mo), Enterprise ($49.99/mo)',
-    
-    customer360.risk_tier AS risk_tier
-        WITH SYNONYMS = ('churn risk', 'risk level', 'risk category', 'churn likelihood')
-        COMMENT = 'ML-predicted churn risk: High (>70%), Medium (40-70%), Low (<40%)',
-    
-    customer360.engagement_tier AS engagement_tier
-        WITH SYNONYMS = ('engagement level', 'activity level', 'engagement category')
-        COMMENT = 'Engagement classification: High (>60 min/day), Medium (30-60), Low (10-30), Inactive (<10)',
-    
-    customer360.sign_up_date AS sign_up_date
+    customer360.signup_date AS signup_date
         WITH SYNONYMS = ('signup date', 'join date', 'registration date', 'account created')
         COMMENT = 'Date when the subscriber first signed up',
     
-    customer360.last_read_date AS last_read_date
-        WITH SYNONYMS = ('last active', 'last activity', 'last engagement', 'most recent read')
-        COMMENT = 'Most recent date the subscriber read content. NULL indicates never read'
+    customer360.risk_tier AS risk_tier
+        WITH SYNONYMS = ('churn risk', 'risk level', 'risk category', 'churn likelihood')
+        COMMENT = 'ML-predicted churn risk tier: High, Medium, or Low',
+    
+    customer360.engagement_tier AS engagement_tier
+        WITH SYNONYMS = ('engagement level', 'activity level', 'engagement category')
+        COMMENT = 'Engagement classification: High Engagement, Medium Engagement, Low Engagement, or Inactive',
+    
+    customer360.churn_risk_category AS churn_risk_category
+        WITH SYNONYMS = ('risk category', 'churn category')
+        COMMENT = 'Churn risk classification: High Risk (>70%), Medium Risk (40-70%), Low Risk (<40%)',
+    
+    customer360.prediction_timestamp AS prediction_timestamp
+        WITH SYNONYMS = ('prediction time', 'scored at', 'model run time')
+        COMMENT = 'Timestamp when the churn risk score was generated'
 )
 METRICS (
     customer360.tenure_days AS tenure_days
         WITH SYNONYMS = ('days subscribed', 'subscription length', 'tenure', 'time as subscriber')
         COMMENT = 'Number of days since the subscriber signed up',
     
-    customer360.total_articles_read AS total_articles_read
-        WITH SYNONYMS = ('articles read', 'content consumed', 'articles', 'reads')
-        COMMENT = 'Lifetime count of articles the subscriber has read',
+    customer360.lifetime_value AS lifetime_value
+        WITH SYNONYMS = ('LTV', 'total value', 'lifetime revenue')
+        COMMENT = 'Total lifetime value of the subscriber',
     
-    customer360.avg_daily_reading_minutes AS avg_daily_reading_minutes
-        WITH SYNONYMS = ('daily reading time', 'reading minutes', 'time spent reading', 'engagement time')
-        COMMENT = 'Average minutes per day spent reading content (last 30 days)',
+    customer360.articles_viewed_30d AS articles_viewed_30d
+        WITH SYNONYMS = ('articles read', 'content consumed', 'articles', 'reads in last 30 days')
+        COMMENT = 'Count of articles viewed in the last 30 days',
     
-    customer360.support_interactions_count AS support_interactions_count
-        WITH SYNONYMS = ('support tickets', 'tickets', 'support requests', 'customer service interactions')
-        COMMENT = 'Total number of support interactions in the last 90 days',
+    customer360.total_time_spent_30d AS total_time_spent_30d
+        WITH SYNONYMS = ('reading time', 'time spent', 'engagement time', 'seconds reading')
+        COMMENT = 'Total time spent reading in the last 30 days (in seconds)',
+    
+    customer360.avg_sections_per_day AS avg_sections_per_day
+        WITH SYNONYMS = ('sections viewed', 'content diversity', 'section count')
+        COMMENT = 'Average number of distinct sections viewed per day',
     
     customer360.churn_risk_score AS churn_risk_score
         WITH SYNONYMS = ('risk score', 'churn probability', 'churn score', 'likelihood to churn')
-        COMMENT = 'ML-predicted probability of churn (0-1 scale). >0.7=High risk, 0.4-0.7=Medium, <0.4=Low',
-    
-    customer360.days_since_last_read AS days_since_last_read
-        WITH SYNONYMS = ('days inactive', 'inactivity period', 'time since last read', 'days without reading')
-        COMMENT = 'Number of days since the subscriber last read content. >30 indicates at-risk'
+        COMMENT = 'ML-predicted probability of churn (0-1 scale). >0.7=High risk, 0.4-0.7=Medium, <0.4=Low'
 )
 COMMENT = 'DEMO: newsworthy - Semantic view for Customer 360 churn analysis with Cortex Analyst';
 
