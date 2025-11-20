@@ -67,7 +67,7 @@ DIMENSIONS (
         WITH SYNONYMS = ('prediction time', 'scored at', 'model run time')
         COMMENT = 'Timestamp when the churn risk score was generated'
 )
-METRICS (
+FACTS (
     customer360.tenure_days AS tenure_days
         WITH SYNONYMS = ('days subscribed', 'subscription length', 'tenure', 'time as subscriber')
         COMMENT = 'Number of days since the subscriber signed up',
@@ -78,15 +78,15 @@ METRICS (
     
     customer360.articles_viewed_30d AS articles_viewed_30d
         WITH SYNONYMS = ('articles read', 'content consumed', 'articles', 'reads in last 30 days')
-        COMMENT = 'Count of articles viewed in the last 30 days',
+        COMMENT = 'Count of articles viewed in the last 30 days (pre-aggregated)',
     
     customer360.total_time_spent_30d AS total_time_spent_30d
         WITH SYNONYMS = ('reading time', 'time spent', 'engagement time', 'seconds reading')
-        COMMENT = 'Total time spent reading in the last 30 days (in seconds)',
+        COMMENT = 'Total time spent reading in the last 30 days in seconds (pre-aggregated)',
     
     customer360.avg_sections_per_day AS avg_sections_per_day
         WITH SYNONYMS = ('sections viewed', 'content diversity', 'section count')
-        COMMENT = 'Average number of distinct sections viewed per day',
+        COMMENT = 'Average number of distinct sections viewed per day (pre-aggregated)',
     
     customer360.churn_risk_score AS churn_risk_score
         WITH SYNONYMS = ('risk score', 'churn probability', 'churn score', 'likelihood to churn')
