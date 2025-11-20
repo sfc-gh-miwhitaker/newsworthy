@@ -13,6 +13,15 @@
  *   - 500,000 content engagement records (last 30 days)
  *   - 12,000 support interactions (last year)
  * 
+ * NATIVE FEATURES LEVERAGED:
+ *   - GENERATOR: Table function for row generation
+ *   - UUID_STRING: Unique identifiers (both random and named)
+ *   - UNIFORM: Evenly-distributed random values
+ *   - NORMAL: Bell-curve distribution for realistic engagement patterns
+ *   - ZIPF: Power-law distribution for article popularity (80/20 rule)
+ *   - SEQ4: Deterministic sequences for cyclic patterns
+ *   - RANDOM: Seed for reproducible randomness
+ * 
  * RUNTIME: ~3-5 minutes on XSMALL warehouse
  * 
  * CLEANUP:
@@ -29,7 +38,7 @@ USE WAREHOUSE SFE_NEWSWORTHY_WH;
 
 USE SCHEMA SFE_RAW_MEDIA;
 
-INSERT INTO RAW_SUBSCRIBER_EVENTS
+INSERT INTO RAW_SUBSCRIBER_EVENTS (subscriber_id, event_type, event_timestamp, subscription_tier, payment_amount)
 SELECT
     UUID_STRING() AS subscriber_id,
     CASE MOD(SEQ4(), 5)
@@ -45,20 +54,27 @@ SELECT
         WHEN 1 THEN 'Premium'
         WHEN 2 THEN 'Enterprise'
     END AS subscription_tier,
-    ROUND(UNIFORM(9.99, 49.99, RANDOM()), 2) AS payment_amount
+    -- NORMAL distribution: Most subscribers pay around $19.99 (mean), with stddev of $10
+    -- Clamped to realistic range: $9.99 - $49.99
+    -- More realistic than uniform: clusters around common price points
+    ROUND(GREATEST(9.99, LEAST(49.99, NORMAL(19.99, 10.0, RANDOM()))), 2) AS payment_amount
 FROM TABLE(GENERATOR(ROWCOUNT => 50000));
 
 -- =============================================================================
 -- LOAD RAW CONTENT ENGAGEMENT (500K rows, 30 days)
 -- =============================================================================
 
-INSERT INTO RAW_CONTENT_ENGAGEMENT
+INSERT INTO RAW_CONTENT_ENGAGEMENT (engagement_id, subscriber_id, article_id, view_timestamp, time_spent_seconds, section)
 SELECT
     UUID_STRING() AS engagement_id,
     UUID_STRING() AS subscriber_id,
-    'ARTICLE_' || LPAD(UNIFORM(1, 1000, RANDOM())::VARCHAR, 6, '0') AS article_id,
+    -- ZIPF distribution: Popular articles get most views (80/20 rule)
+    -- Parameters: s=1.0 (moderate skew), N=1000 articles
+    'ARTICLE_' || LPAD(ZIPF(1.0, 1000, RANDOM())::VARCHAR, 6, '0') AS article_id,
     DATEADD('day', -UNIFORM(0, 30, RANDOM()), CURRENT_TIMESTAMP()) AS view_timestamp,
-    UNIFORM(10, 600, RANDOM()) AS time_spent_seconds,
+    -- NORMAL distribution: Most readers spend 2-5 minutes (mean=180s, stddev=120s)
+    -- More realistic than uniform distribution (avoids unrealistic extremes)
+    GREATEST(10, LEAST(600, ROUND(NORMAL(180, 120, RANDOM()), 0))) AS time_spent_seconds,
     CASE MOD(SEQ4(), 5)
         WHEN 0 THEN 'News'
         WHEN 1 THEN 'Opinion'
@@ -72,7 +88,7 @@ FROM TABLE(GENERATOR(ROWCOUNT => 500000));
 -- LOAD RAW SUPPORT INTERACTIONS (12K rows, 1 year)
 -- =============================================================================
 
-INSERT INTO RAW_SUPPORT_INTERACTIONS
+INSERT INTO RAW_SUPPORT_INTERACTIONS (interaction_id, subscriber_id, ticket_type, interaction_timestamp, resolution_status)
 SELECT
     UUID_STRING() AS interaction_id,
     UUID_STRING() AS subscriber_id,
@@ -96,7 +112,7 @@ FROM TABLE(GENERATOR(ROWCOUNT => 12000));
 USE SCHEMA SFE_STG_MEDIA;
 
 -- Load cleaned subscription events
-INSERT INTO STG_SUBSCRIBER_EVENTS
+INSERT INTO STG_SUBSCRIBER_EVENTS (subscriber_id, event_type, cleaned_timestamp, subscription_tier, payment_amount, is_valid)
 SELECT
     subscriber_id,
     event_type,
@@ -108,7 +124,7 @@ FROM SNOWFLAKE_EXAMPLE.SFE_RAW_MEDIA.RAW_SUBSCRIBER_EVENTS
 WHERE event_timestamp IS NOT NULL AND payment_amount > 0;
 
 -- Create unified customer master (deduplicated)
-INSERT INTO STG_UNIFIED_CUSTOMER
+INSERT INTO STG_UNIFIED_CUSTOMER (subscriber_id, email, first_name, last_name, signup_date, current_tier, is_active)
 SELECT DISTINCT
     subscriber_id,
     'subscriber_' || SUBSTR(subscriber_id, 1, 8) || '@example.com' AS email,
@@ -121,7 +137,7 @@ FROM STG_SUBSCRIBER_EVENTS
 QUALIFY ROW_NUMBER() OVER (PARTITION BY subscriber_id ORDER BY cleaned_timestamp DESC) = 1;
 
 -- Load parsed content engagement
-INSERT INTO STG_CONTENT_ENGAGEMENT
+INSERT INTO STG_CONTENT_ENGAGEMENT (engagement_id, subscriber_id, article_id, engagement_date, time_spent_seconds, section)
 SELECT
     engagement_id,
     subscriber_id,
@@ -138,7 +154,7 @@ FROM SNOWFLAKE_EXAMPLE.SFE_RAW_MEDIA.RAW_CONTENT_ENGAGEMENT;
 USE SCHEMA SFE_ANALYTICS_MEDIA;
 
 -- Populate subscriber dimension
-INSERT INTO DIM_SUBSCRIBERS
+INSERT INTO DIM_SUBSCRIBERS (subscriber_id, email, demographic_segment, signup_date, tenure_days, lifetime_value)
 SELECT
     subscriber_id,
     email,
@@ -164,7 +180,7 @@ FROM SNOWFLAKE_EXAMPLE.SFE_STG_MEDIA.STG_CONTENT_ENGAGEMENT
 GROUP BY engagement_date, subscriber_id;
 
 -- Populate training dataset with features and churn labels
-INSERT INTO FCT_CHURN_TRAINING
+INSERT INTO FCT_CHURN_TRAINING (subscriber_id, engagement_score, support_tickets_count, days_since_last_read, subscription_tenure_days, churned)
 SELECT
     d.subscriber_id,
     COALESCE(AVG(f.total_time_spent) / 60.0, 0) AS engagement_score,

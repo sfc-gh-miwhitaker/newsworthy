@@ -124,7 +124,7 @@ USE ROLE ACCOUNTADMIN;
 
 -- 2. Create Tables & Load Data
 @sql/02_data/01_create_tables.sql
-@sql/02_data/02_load_sample_data.sql
+@sql/02_data/02_load_sample_data.sql  -- Generates realistic synthetic data using NORMAL, ZIPF distributions
 
 -- 3. CDC Pipeline
 @sql/03_transformations/01_create_streams.sql

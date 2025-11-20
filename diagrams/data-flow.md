@@ -148,6 +148,24 @@ Three distinct source systems generate subscriber data:
   - Validates data quality
   - Error handling with reject tables
 
+**Synthetic Data Generation (Demo Mode):**
+For demonstration purposes, initial data is generated using Snowflake native functions with statistically realistic distributions:
+
+| Column | Distribution Type | Parameters | Rationale |
+|--------|------------------|------------|-----------|
+| `payment_amount` | NORMAL | mean=$19.99, stddev=$10 | Clusters around typical subscription price points ($9.99-$49.99) |
+| `article_id` | ZIPF | s=1.0, N=1000 | Power-law distribution (80/20 rule) - few viral articles, long tail of rarely-viewed content |
+| `time_spent_seconds` | NORMAL | mean=180s, stddev=120s | Bell curve around 3 minutes - realistic reading behavior vs. uniform distribution |
+| `subscriber_id` | UUID_STRING | Random v4 | Collision-proof unique identifiers |
+| `event_timestamp` | UNIFORM | last 90 days | Evenly distributed across time range |
+
+**Why These Distributions Matter:**
+- **NORMAL:** Real-world pricing and engagement cluster around means (not flat)
+- **ZIPF:** Media consumption follows power laws (viral content vs. long tail)
+- **UNIFORM:** Truly random selection (dates, categories) where all outcomes equally likely
+
+See `sql/02_data/02_load_sample_data.sql` for implementation details.
+
 **Change Data Capture (Streams):**
 - `sfe_subscriber_events_stream` → Captures all INSERT operations on RAW_SUBSCRIBER_EVENTS
 - `sfe_content_stream` → Captures all INSERT operations on RAW_CONTENT_ENGAGEMENT
