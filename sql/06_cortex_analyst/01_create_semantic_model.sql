@@ -29,10 +29,36 @@ USE SCHEMA SEMANTIC_MODELS;
 
 -- Create semantic view using native DDL (GA June 2025)
 -- Based on V_CUSTOMER_360 unified customer view
+-- NOTE: Clause order matters - FACTS before DIMENSIONS before METRICS
 CREATE OR REPLACE SEMANTIC VIEW SV_CUSTOMER_360
 TABLES (
     customer360 AS SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.V_CUSTOMER_360
     COMMENT = 'Unified view of all subscribers with demographics, engagement, and churn predictions'
+)
+FACTS (
+    customer360.tenure_days AS tenure_days
+        WITH SYNONYMS = ('days subscribed', 'subscription length', 'tenure', 'time as subscriber')
+        COMMENT = 'Number of days since the subscriber signed up',
+    
+    customer360.lifetime_value AS lifetime_value
+        WITH SYNONYMS = ('LTV', 'total value', 'lifetime revenue')
+        COMMENT = 'Total lifetime value of the subscriber',
+    
+    customer360.articles_viewed_30d AS articles_viewed_30d
+        WITH SYNONYMS = ('articles read', 'content consumed', 'articles', 'reads in last 30 days')
+        COMMENT = 'Count of articles viewed in the last 30 days (pre-aggregated)',
+    
+    customer360.total_time_spent_30d AS total_time_spent_30d
+        WITH SYNONYMS = ('reading time', 'time spent', 'engagement time', 'seconds reading')
+        COMMENT = 'Total time spent reading in the last 30 days in seconds (pre-aggregated)',
+    
+    customer360.avg_sections_per_day AS avg_sections_per_day
+        WITH SYNONYMS = ('sections viewed', 'content diversity', 'section count')
+        COMMENT = 'Average number of distinct sections viewed per day (pre-aggregated)',
+    
+    customer360.churn_risk_score AS churn_risk_score
+        WITH SYNONYMS = ('risk score', 'churn probability', 'churn score', 'likelihood to churn')
+        COMMENT = 'ML-predicted probability of churn (0-1 scale). >0.7=High risk, 0.4-0.7=Medium, <0.4=Low'
 )
 DIMENSIONS (
     customer360.subscriber_id AS subscriber_id
@@ -66,31 +92,6 @@ DIMENSIONS (
     customer360.prediction_timestamp AS prediction_timestamp
         WITH SYNONYMS = ('prediction time', 'scored at', 'model run time')
         COMMENT = 'Timestamp when the churn risk score was generated'
-)
-FACTS (
-    customer360.tenure_days AS tenure_days
-        WITH SYNONYMS = ('days subscribed', 'subscription length', 'tenure', 'time as subscriber')
-        COMMENT = 'Number of days since the subscriber signed up',
-    
-    customer360.lifetime_value AS lifetime_value
-        WITH SYNONYMS = ('LTV', 'total value', 'lifetime revenue')
-        COMMENT = 'Total lifetime value of the subscriber',
-    
-    customer360.articles_viewed_30d AS articles_viewed_30d
-        WITH SYNONYMS = ('articles read', 'content consumed', 'articles', 'reads in last 30 days')
-        COMMENT = 'Count of articles viewed in the last 30 days (pre-aggregated)',
-    
-    customer360.total_time_spent_30d AS total_time_spent_30d
-        WITH SYNONYMS = ('reading time', 'time spent', 'engagement time', 'seconds reading')
-        COMMENT = 'Total time spent reading in the last 30 days in seconds (pre-aggregated)',
-    
-    customer360.avg_sections_per_day AS avg_sections_per_day
-        WITH SYNONYMS = ('sections viewed', 'content diversity', 'section count')
-        COMMENT = 'Average number of distinct sections viewed per day (pre-aggregated)',
-    
-    customer360.churn_risk_score AS churn_risk_score
-        WITH SYNONYMS = ('risk score', 'churn probability', 'churn score', 'likelihood to churn')
-        COMMENT = 'ML-predicted probability of churn (0-1 scale). >0.7=High risk, 0.4-0.7=Medium, <0.4=Low'
 )
 COMMENT = 'DEMO: newsworthy - Semantic view for Customer 360 churn analysis with Cortex Analyst';
 
