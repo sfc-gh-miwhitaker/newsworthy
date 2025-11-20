@@ -144,6 +144,7 @@ with col_left:
         COUNT(*) AS subscriber_count
     FROM SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.V_CUSTOMER_360
     WHERE {where_clause}
+        AND risk_tier IS NOT NULL
     GROUP BY risk_tier
     ORDER BY 
         CASE risk_tier
@@ -168,8 +169,9 @@ with col_right:
         COUNT(*) AS subscriber_count
     FROM SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.V_CUSTOMER_360
     WHERE {where_clause}
+        AND engagement_tier IS NOT NULL
     GROUP BY engagement_tier
-    ORDER BY 
+    ORDER BY
         CASE engagement_tier
             WHEN 'High Engagement' THEN 1
             WHEN 'Medium Engagement' THEN 2
@@ -213,8 +215,7 @@ if not high_risk_df.empty:
     
     st.dataframe(
         high_risk_df,
-        use_container_width=True,
-        hide_index=True
+        use_container_width=True
     )
 else:
     st.info("No high-risk subscribers found for selected filters")
@@ -233,6 +234,8 @@ with st.expander("📊 Detailed Analytics", expanded=False):
         AVG(churn_risk_score) AS avg_risk_score
     FROM SNOWFLAKE_EXAMPLE.SFE_ANALYTICS_MEDIA.V_CUSTOMER_360
     WHERE {where_clause}
+        AND risk_tier IS NOT NULL
+        AND demographic_segment IS NOT NULL
     GROUP BY demographic_segment, risk_tier
     ORDER BY demographic_segment, risk_tier
     """
