@@ -1,2 +1,37 @@
-# Cursor editor artifacts (local only)
+# Development artifacts
 .cursor/
+.cursornotes/
+
+# Virtual environments
+venv/
+.venv/
+*.venv/
+
+# Config with secrets
+config/.env
+
+# Build state
+.builddemo-state.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
