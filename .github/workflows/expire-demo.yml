@@ -1,0 +1,50 @@
+name: Auto-Archive Expired Demo
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight UTC
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  check-expiration:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Check if expired
+        id: check
+        run: |
+          EXPIRATION_DATE="2025-12-20"
+          TODAY=$(date +%Y-%m-%d)
+          
+          echo "Today: $TODAY"
+          echo "Expiration: $EXPIRATION_DATE"
+          
+          if [[ "$TODAY" > "$EXPIRATION_DATE" ]]; then
+            echo "expired=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Demo has expired" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "expired=false" >> $GITHUB_OUTPUT
+            DAYS_LEFT=$(( ( $(date -d "$EXPIRATION_DATE" +%s) - $(date -d "$TODAY" +%s) ) / 86400 ))
+            echo "✅ Demo active - $DAYS_LEFT days remaining" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Archive repository
+        if: steps.check.outputs.expired == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Archiving repository as demo has expired"
+          gh repo archive ${{ github.repository }} --yes
+          echo "📦 Repository archived on $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "Reason: Demo expiration date (2025-12-20) reached" >> $GITHUB_STEP_SUMMARY
+          
+      - name: Report status
+        if: steps.check.outputs.expired == 'false'
+        run: |
+          echo "Demo is still active - no action taken"
+

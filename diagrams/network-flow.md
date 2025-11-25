@@ -1,7 +1,8 @@
 # Network Flow - Newsworthy Customer 360 Analytics
 
-**Author:** Snowflake Solutions Engineering  
-**Last Updated:** 2025-11-20  
+**Author:** SE Community  
+**Last Updated:** 2025-11-25  
+**Expires:** 2025-12-20 (30 days from creation)  
 **Status:** Reference Implementation
 
 ![Snowflake](https://img.shields.io/badge/Snowflake-29B5E8?style=for-the-badge&logo=snowflake&logoColor=white)

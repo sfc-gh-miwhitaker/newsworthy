@@ -1,6 +1,18 @@
+![Reference Implementation](https://img.shields.io/badge/Reference-Implementation-blue)
+![Ready to Run](https://img.shields.io/badge/Ready%20to%20Run-Yes-green)
+![Expires](https://img.shields.io/badge/Expires-2025--12--20-orange)
+
 # Newsworthy: Customer 360 Media Analytics Demo
 
+> DEMONSTRATION PROJECT - EXPIRES: 2025-12-20  
+> This demo uses Snowflake features current as of November 2025.  
+> After expiration, this repository will be archived and made private.
+
 ![Snowflake](https://img.shields.io/badge/Snowflake-29B5E8?style=for-the-badge&logo=snowflake&logoColor=white)
+
+**Author:** SE Community  
+**Purpose:** Reference implementation for Customer 360 subscriber analytics  
+**Created:** 2025-11-20 | **Expires:** 2025-12-20 (30 days) | **Status:** ACTIVE
 
 **⚠️ DEMO PROJECT - NOT FOR PRODUCTION USE**
 
@@ -231,8 +243,9 @@ This code demonstrates production-grade architectural patterns and best practice
 
 ## Support & Feedback
 
-**Created by:** Snowflake Solutions Engineering  
-**Last Updated:** 2025-11-20  
+**Author:** SE Community  
+**Created:** 2025-11-20  
+**Expires:** 2025-12-20  
 **Version:** 1.0  
 
 For questions or feedback on this demo:

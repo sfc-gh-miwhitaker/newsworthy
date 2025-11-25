@@ -60,7 +60,35 @@
  ******************************************************************************/
 
 -- =============================================================================
--- SECTION 1: ENVIRONMENT SETUP
+-- SECTION 1: EXPIRATION CHECK (MANDATORY FOR ALL PUBLIC DEMOS)
+-- =============================================================================
+
+-- Demo expiration date (30 days from creation: 2025-11-20 + 30 days)
+SET expiration_date = '2025-12-20'::DATE;
+
+-- Fail deployment if expired
+DECLARE
+    days_remaining NUMBER;
+BEGIN
+    days_remaining := DATEDIFF('day', CURRENT_DATE(), $expiration_date);
+    
+    IF (CURRENT_DATE() > $expiration_date) THEN
+        RETURN 'ERROR: This demo expired on ' || $expiration_date || '. Code may use outdated Snowflake syntax. Please contact your SE for an updated version.';
+    END IF;
+    
+    -- Display expiration warning
+    SELECT 
+        '✅ Demo Active' AS status,
+        $expiration_date AS expires_on,
+        days_remaining AS days_remaining,
+        CASE 
+            WHEN days_remaining < 7 THEN '⚠️ Expiring soon - this demo will be archived on ' || $expiration_date
+            ELSE '✅ Demo is current'
+        END AS expiration_warning;
+END;
+
+-- =============================================================================
+-- SECTION 2: ENVIRONMENT SETUP
 -- =============================================================================
 
 -- Capture deployment start time for runtime calculation
@@ -75,7 +103,7 @@ SET target_database = 'SNOWFLAKE_EXAMPLE';
 SET github_repo_url = 'https://github.com/sfc-gh-miwhitaker/newsworthy.git';
 
 -- =============================================================================
--- SECTION 2: CREATE API INTEGRATION FOR GITHUB ACCESS
+-- SECTION 3: CREATE API INTEGRATION FOR GITHUB ACCESS
 -- =============================================================================
 
 -- Create API integration for GitHub repository access (public repo, no auth)
@@ -90,7 +118,7 @@ CREATE API INTEGRATION IF NOT EXISTS SFE_NEWSWORTHY_GIT_INTEGRATION
 SHOW API INTEGRATIONS LIKE 'SFE_NEWSWORTHY_GIT_INTEGRATION';
 
 -- =============================================================================
--- SECTION 3: CREATE DEMO WAREHOUSE
+-- SECTION 4: CREATE DEMO WAREHOUSE
 -- =============================================================================
 
 -- Create dedicated XSMALL warehouse for demo compute
@@ -106,7 +134,7 @@ CREATE WAREHOUSE IF NOT EXISTS SFE_NEWSWORTHY_WH WITH
 USE WAREHOUSE SFE_NEWSWORTHY_WH;
 
 -- =============================================================================
--- SECTION 4: CREATE DATABASE & GIT REPOSITORY
+-- SECTION 5: CREATE DATABASE & GIT REPOSITORY
 -- =============================================================================
 
 -- Create or use existing SNOWFLAKE_EXAMPLE database
@@ -131,7 +159,7 @@ ALTER GIT REPOSITORY SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo FETCH;
 LIST @SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo/branches/main;
 
 -- =============================================================================
--- SECTION 5: EXECUTE SETUP SCRIPTS FROM GIT REPOSITORY
+-- SECTION 6: EXECUTE SETUP SCRIPTS FROM GIT REPOSITORY
 -- =============================================================================
 
 -- Execute 01_setup scripts: Create database, schemas, warehouse (already done above)
@@ -142,7 +170,7 @@ EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo/branches/mai
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo/branches/main/sql/01_setup/02_create_schemas.sql;
 
 -- =============================================================================
--- SECTION 6: EXECUTE DATA SCRIPTS FROM GIT REPOSITORY
+-- SECTION 7: EXECUTE DATA SCRIPTS FROM GIT REPOSITORY
 -- =============================================================================
 
 -- Execute 02_data scripts: Create tables and load sample data
@@ -150,7 +178,7 @@ EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo/branches/mai
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo/branches/main/sql/02_data/02_load_sample_data.sql;
 
 -- =============================================================================
--- SECTION 7: EXECUTE TRANSFORMATION SCRIPTS FROM GIT REPOSITORY
+-- SECTION 8: EXECUTE TRANSFORMATION SCRIPTS FROM GIT REPOSITORY
 -- =============================================================================
 
 -- Execute 03_transformations scripts: Create streams, views, and tasks for CDC
@@ -159,7 +187,7 @@ EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo/branches/mai
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo/branches/main/sql/03_transformations/03_create_tasks.sql;
 
 -- =============================================================================
--- SECTION 8: EXECUTE CORTEX ML SCRIPTS FROM GIT REPOSITORY
+-- SECTION 9: EXECUTE CORTEX ML SCRIPTS FROM GIT REPOSITORY
 -- =============================================================================
 
 -- Execute 04_cortex scripts: Train churn prediction model
@@ -167,21 +195,21 @@ EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo/branches/mai
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo/branches/main/sql/04_cortex/02_daily_scoring.sql;
 
 -- =============================================================================
--- SECTION 9: EXECUTE CORTEX ANALYST SEMANTIC VIEW DEPLOYMENT
+-- SECTION 10: EXECUTE CORTEX ANALYST SEMANTIC VIEW DEPLOYMENT
 -- =============================================================================
 
 -- Execute 06_cortex_analyst script: Create semantic view for conversational AI
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo/branches/main/sql/06_cortex_analyst/01_create_semantic_model.sql;
 
 -- =============================================================================
--- SECTION 10: EXECUTE STREAMLIT DEPLOYMENT FROM GIT REPOSITORY
+-- SECTION 11: EXECUTE STREAMLIT DEPLOYMENT FROM GIT REPOSITORY
 -- =============================================================================
 
 -- Execute 05_streamlit script: Create Customer 360 dashboard with AI chat
 EXECUTE IMMEDIATE FROM @SNOWFLAKE_EXAMPLE.GIT_REPOS.newsworthy_repo/branches/main/sql/05_streamlit/01_create_dashboard.sql;
 
 -- =============================================================================
--- SECTION 11: DEPLOYMENT COMPLETE
+-- SECTION 12: DEPLOYMENT COMPLETE
 -- =============================================================================
 
 -- Display comprehensive deployment summary with actual runtime
